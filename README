@@ -1,0 +1,282 @@
+# Enlace video
+
+``` https://drive.google.com/file/d/18YjMtKPhN8cXRq857kwP4W0OWGHNgDqG/view?usp=sharing ```
+
+# Proyecto Python - Pygame
+
+A continuación, explico los 9 retos que he realizado y cómo los he solucionado.
+
+---
+
+## 1. Player boundaries - Límites de pantalla
+
+**¿Qué se pedía?**
+
+Evitar que los dos jugadores pudieran salir de la ventana del juego por cualquiera de sus cuatro lados.
+
+**¿Cómo lo he hecho?**
+
+He modificado el archivo `player.py`, concretamente los métodos `moveArrows()` y `moveWASD()`.
+
+He añadido la siguiente línea al final de cada método:
+
+```python
+self.rect.clamp_ip(pygame.Rect(0, 0, WIDTH, HEIGHT))
+```
+
+Con esto consigo que los jugadores permanezcan siempre dentro de los límites de la ventana, independientemente de la dirección en la que se muevan.
+
+---
+
+## 2. Random obstacle sizes - Tamaños aleatorios
+
+**¿Qué se pedía?**
+
+Hacer que los obstáculos aparecieran con tamaños aleatorios entre 20 y 70 píxeles.
+
+**¿Cómo lo he hecho?**
+
+He modificado el archivo `obstacle.py`, dentro del método `__init__()`.
+
+Antes todos los obstáculos tenían un tamaño fijo de 40 píxeles. Lo he cambiado por:
+
+```python
+size = random.randint(20, 70)
+```
+
+También he mantenido el cálculo de la posición horizontal:
+
+```python
+x = random.randint(0, WIDTH - size)
+```
+
+De esta manera, cada obstáculo tiene un tamaño diferente y aparece completamente dentro del ancho de la ventana.
+
+---
+
+## 3. Collision with Player 2 - Colisión del segundo jugador
+
+**¿Qué se pedía?**
+
+Hacer que el juego también terminase cuando un obstáculo golpease al segundo jugador.
+
+**¿Cómo lo he hecho?**
+
+He modificado el archivo `main.py`, en la parte donde se comprueban las colisiones.
+
+Antes solamente se comprobaba la colisión con el primer jugador. He añadido una segunda comprobación utilizando `or`:
+
+```python
+if player.rect.colliderect(obstacle.rect) or player2.rect.colliderect(obstacle.rect):
+    game_over = True
+```
+
+Así, si cualquiera de los dos jugadores choca contra un obstáculo, aparece el mensaje Game Over.
+
+---
+
+## 4. Pause game - Pausar el juego
+
+**¿Qué se pedía?**
+
+Poder pausar el juego pulsando ESC y continuar la partida volviendo a pulsar la misma tecla.
+
+**¿Cómo lo he hecho?**
+
+En `main.py` he creado una variable llamada `paused`, que indica si el juego está pausado o no.
+
+Después he utilizado la tecla ESC para cambiar su estado:
+
+```python
+paused = not paused
+```
+
+También he modificado la condición principal del juego:
+
+```python
+if not game_over and not paused:
+```
+
+De esta forma, cuando el juego está pausado, no se ejecutan los movimientos de los jugadores ni de los obstáculos, y tampoco aparecen obstáculos nuevos.
+
+Por último, he añadido un mensaje en pantalla que muestra PAUSE cuando la partida está detenida.
+
+---
+
+## 5. Restart game - Reiniciar la partida
+
+**¿Qué se pedía?**
+
+Poder comenzar una nueva partida pulsando la tecla R cuando aparezca Game Over, sin tener que cerrar el programa.
+
+**¿Cómo lo he hecho?**
+
+He creado una función llamada `restart_game()` en `main.py`.
+
+Dentro de ella he vuelto a crear los dos jugadores en sus posiciones iniciales y he reiniciado las variables necesarias:
+
+```python
+obstacles = []
+score = 0
+game_over = False
+paused = False
+```
+
+También he añadido la detección de la tecla R para ejecutar esta función cuando la partida haya terminado.
+
+Así puedo volver a jugar sin cerrar el programa.
+
+---
+
+## 6. Survival timer - Tiempo de supervivencia
+
+**¿Qué se pedía?**
+
+Mostrar cuánto tiempo lleva el jugador sobreviviendo. El contador debe detenerse cuando aparece Game Over y durante las pausas.
+
+**¿Cómo lo he hecho?**
+
+He utilizado `pygame.time.get_ticks()` para obtener el tiempo transcurrido desde que se inició Pygame.
+
+He creado las variables `start_time` y `survival_time` para controlar el contador.
+
+Para calcular los segundos he utilizado:
+
+```python
+survival_time = (pygame.time.get_ticks() - start_time) // 1000
+```
+
+También he tenido que controlar el tiempo durante las pausas. Para ello, guardo el momento en el que se pausa el juego y, cuando se reanuda, compenso el tiempo que ha estado detenido.
+
+Por último, he añadido el tiempo a la pantalla junto a la puntuación.
+
+Cuando se reinicia la partida, el contador vuelve a cero.
+
+---
+
+## 7. Increasing difficulty - Dificultad progresiva
+
+**¿Qué se pedía?**
+
+Hacer que los obstáculos aparezcan cada vez más rápido según aumenta la puntuación.
+
+El intervalo debía reducirse 50 milisegundos cada 10 puntos, sin bajar nunca de 150 milisegundos.
+
+**¿Cómo lo he hecho?**
+
+He modificado la parte de `main.py` donde se controla la aparición de los obstáculos.
+
+He utilizado la siguiente operación:
+
+```python
+current_spawn_delay = max(150, SPAWN_OBSTACLE_DELAY - (score // 10) * 50)
+```
+
+Con esta operación calculo el tiempo que debe pasar entre la aparición de los obstáculos.
+
+Por ejemplo, cuando consigo 10 puntos, el intervalo pasa de 500 a 450 milisegundos.
+
+He utilizado `max()` para asegurarme de que nunca baje de 150 milisegundos.
+
+---
+
+## 8. Change player speed - Cambiar velocidad
+
+**¿Qué se pedía?**
+
+Permitir que el primer jugador pueda aumentar o reducir su velocidad utilizando las teclas + y -.
+
+La velocidad debía mantenerse entre 2 y 12.
+
+**¿Cómo lo he hecho?**
+
+He añadido nuevas condiciones en el apartado de eventos de `main.py`, utilizando `pygame.KEYDOWN` para detectar las pulsaciones.
+
+Para aumentar la velocidad he utilizado:
+
+```python
+player.speed = min(12, player.speed + 1)
+```
+
+Para reducirla he utilizado:
+
+```python
+player.speed = max(2, player.speed - 1)
+```
+
+De esta forma, cada pulsación modifica la velocidad en una unidad y nunca supera los límites establecidos.
+
+Esta modificación solamente afecta al primer jugador.
+
+---
+
+## 9. High score - Récord de puntuación
+
+**¿Qué se pedía?**
+
+Guardar la mejor puntuación conseguida durante la ejecución del programa y mostrarla junto a la puntuación actual.
+
+El récord debía mantenerse aunque se reiniciase la partida.
+
+**¿Cómo lo he hecho?**
+
+He creado una variable llamada `high_score`, inicializada a cero.
+
+Cada vez que aumenta la puntuación, compruebo si supera el récord anterior:
+
+```python
+if score > high_score:
+    high_score = score
+```
+
+También he añadido el récord a la pantalla para poder verlo durante la partida.
+
+Al reiniciar el juego, solamente reinicio la puntuación normal. El récord se conserva porque no lo modifico dentro de la función `restart_game()`.
+
+---
+
+## Problemas que he encontrado y cómo los he solucionado
+
+Durante la realización de los retos me han surgido algunos errores que he tenido que ir solucionando.
+
+### Error 1. Acceder a event.key
+
+Al añadir los controles del teclado para pausar y reiniciar el juego, me apareció el siguiente error:
+
+```text
+AttributeError: 'pygame.event.Event' object has no attribute 'key'
+```
+
+El problema era que estaba intentando acceder a `event.key` sin comprobar antes si realmente se trataba de una pulsación de teclado.
+
+Lo solucioné añadiendo:
+
+```python
+if event.type == pygame.KEYDOWN:
+```
+
+De esta manera, solamente compruebo las teclas cuando se produce una pulsación.
+
+### Error 2. Variable running no definida
+
+Después de modificar el bucle principal, me apareció este error:
+
+```text
+NameError: name 'running' is not defined
+```
+
+El problema era que estaba utilizando la variable `running` sin haberla inicializado.
+
+Lo solucioné añadiendo antes del bucle:
+
+```python
+running = True
+```
+
+Así el programa sabe que debe seguir ejecutándose.
+
+### Error 3. Puntuaciones que se solapaban
+
+Al añadir el tiempo de supervivencia y el récord, me di cuenta de que algunos textos aparecían en la misma posición y se solapaban.
+
+Lo solucioné cambiando las coordenadas donde se dibujan los textos en pantalla, colocando cada uno debajo del anterior.
